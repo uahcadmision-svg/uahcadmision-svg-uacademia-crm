@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro — UAcademia Admisión 2027</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 60%, #3B82F6 100%); min-height: 100vh; padding: 20px 12px; color: #0F172A; }
+    .container { max-width: 540px; margin: 0 auto; }
+
+    .brand { text-align: center; color: #fff; margin-bottom: 20px; }
+    .brand-logo { width: 52px; height: 52px; background: rgba(255,255,255,.15); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 10px; backdrop-filter: blur(6px); }
+    .brand-logo svg { width: 30px; height: 30px; stroke: #fff; fill: none; stroke-width: 2; }
+    .brand-title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+    .brand-sub { font-size: 11px; font-weight: 500; opacity: .85; letter-spacing: 1.5px; margin-top: 3px; }
+
+    .card { background: #fff; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.2); overflow: hidden; }
+
+    .card-hd { padding: 22px 24px 16px; border-bottom: 1px solid #F1F5F9; }
+    .card-title { font-size: 18px; font-weight: 700; color: #0F172A; margin-bottom: 6px; }
+    .card-sub { font-size: 13px; color: #64748B; line-height: 1.5; }
+    .activity-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 11px; font-weight: 600; margin-top: 10px; }
+
+    .card-body { padding: 20px 24px 22px; }
+
+    .grp { margin-bottom: 14px; }
+    .grp-title { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .6px; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #E2E8F0; }
+    .grp-title:first-of-type { margin-top: 0; }
+    .row { display: grid; gap: 10px; }
+    .row-2 { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 420px) { .row-2 { grid-template-columns: 1fr; } }
+
+    label { display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px; }
+    label .req { color: #DC2626; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #E2E8F0; border-radius: 8px; font-family: inherit; font-size: 14px; background: #fff; color: #0F172A; transition: border-color .15s, box-shadow .15s; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+    input.error, select.error { border-color: #DC2626; background: #FEF2F2; }
+    .hint { font-size: 11px; color: #64748B; margin-top: 3px; }
+    .err-msg { font-size: 11px; color: #DC2626; margin-top: 3px; font-weight: 500; display: none; }
+    .err-msg.show { display: block; }
+
+    textarea { min-height: 64px; resize: vertical; }
+
+    .btn-submit { width: 100%; padding: 14px; margin-top: 18px; background: #2563EB; color: #fff; border: none; border-radius: 10px; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; transition: background .15s, transform .1s; }
+    .btn-submit:hover:not(:disabled) { background: #1D4ED8; }
+    .btn-submit:active:not(:disabled) { transform: scale(.98); }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+    .footer-note { text-align: center; font-size: 11px; color: rgba(255,255,255,.85); margin-top: 16px; line-height: 1.5; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .success-box { text-align: center; padding: 40px 24px 32px; }
+    .success-icon { width: 68px; height: 68px; border-radius: 50%; background: #DCFCE7; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+    .success-icon svg { width: 36px; height: 36px; stroke: #15803D; fill: none; stroke-width: 3; }
+    .success-title { font-size: 20px; font-weight: 700; color: #15803D; margin-bottom: 10px; }
+    .success-msg { font-size: 14px; color: #475569; line-height: 1.6; }
+
+    .error-box { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 14px 16px; text-align: center; }
+    .error-box-title { font-size: 14px; font-weight: 700; color: #991B1B; margin-bottom: 4px; }
+    .error-box-msg { font-size: 12px; color: #7F1D1D; }
+
+    .loading { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; color: #64748B; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #E2E8F0; border-top-color: #2563EB; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="brand">
+    <div class="brand-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z"/><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+    </div>
+    <div class="brand-title">UAcademia</div>
+    <div class="brand-sub">ADMISIÓN 2027</div>
+  </div>
+
+  <div class="card">
+
+    <!-- Pantalla LOADING: verificando actividad -->
+    <div id="screen-loading" class="screen active">
+      <div class="loading">
+        <div class="spinner"></div>
+        <div style="font-size:13px;font-weight:600">Verificando formulario…</div>
+      </div>
+    </div>
+
+    <!-- Pantalla ERROR: link inválido/expirado -->
+    <div id="screen-error" class="screen">
+      <div class="card-body">
+        <div class="error-box">
+          <div class="error-box-title" id="err-title">Enlace no válido</div>
+          <div class="error-box-msg" id="err-msg">Este link no existe o ha expirado. Comunícate con Admisión para obtener uno nuevo.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pantalla FORMULARIO -->
+    <div id="screen-form" class="screen">
+      <div class="card-hd">
+        <div class="card-title">Registro de Interesado</div>
+        <div class="card-sub">Completa tus datos para recibir información sobre las carreras y beneficios de UAcademia.</div>
+        <div class="activity-badge" id="activity-label">
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          <span id="activity-name">—</span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <form id="lead-form" onsubmit="return false">
+
+          <div class="grp-title">Datos personales</div>
+          <div class="grp">
+            <label>RUT <span class="req">*</span></label>
+            <input type="text" id="f-rut" placeholder="12.345.678-9" autocomplete="off" required>
+            <div class="err-msg" id="err-rut">RUT inválido</div>
+          </div>
+          <div class="row row-2">
+            <div class="grp">
+              <label>Nombres <span class="req">*</span></label>
+              <input type="text" id="f-nombres" required>
+              <div class="err-msg" id="err-nombres">Ingresa tus nombres</div>
+            </div>
+            <div class="grp">
+              <label>Apellido Paterno <span class="req">*</span></label>
+              <input type="text" id="f-apPaterno" required>
+              <div class="err-msg" id="err-apPaterno">Ingresa tu apellido</div>
+            </div>
+          </div>
+          <div class="grp">
+            <label>Apellido Materno</label>
+            <input type="text" id="f-apMaterno">
+          </div>
+
+          <div class="grp-title">Contacto</div>
+          <div class="row row-2">
+            <div class="grp">
+              <label>Email <span class="req">*</span></label>
+              <input type="email" id="f-email" placeholder="tu@correo.com" required>
+              <div class="err-msg" id="err-email">Email inválido</div>
+            </div>
+            <div class="grp">
+              <label>Teléfono <span class="req">*</span></label>
+              <input type="tel" id="f-tel1" placeholder="+56 9 1234 5678" required>
+              <div class="err-msg" id="err-tel1">Teléfono inválido</div>
+            </div>
+          </div>
+
+          <div class="grp-title">Interés académico</div>
+          <div class="grp">
+            <label>Carrera(s) de interés <span class="req">*</span></label>
+            <div style="position:relative">
+              <select id="f-carrera-picker" onchange="agregarCarrera(this.value); this.value='';" style="margin-bottom:8px">
+                <option value="">— Agrega una carrera de interés —</option>
+              </select>
+              <div id="f-carreras-chips" style="display:flex;flex-direction:column;gap:6px;min-height:36px;padding:8px;background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:8px">
+                <div style="color:#94A3B8;font-size:11px;text-align:center;padding:6px" id="f-carreras-placeholder">Selecciona una o más carreras del menú superior</div>
+              </div>
+              <div class="hint">Puedes seleccionar hasta 5 carreras. La primera será la principal.</div>
+            </div>
+            <div class="err-msg" id="err-carrera">Selecciona al menos una carrera</div>
+          </div>
+
+          <div class="grp-title">Procedencia</div>
+          <div class="grp">
+            <label>Nivel de Estudio Medio <span class="req">*</span></label>
+            <select id="f-nivelEM" required>
+              <option value="">— Selecciona tu nivel actual —</option>
+              <option value="1° Medio">1° Medio</option>
+              <option value="2° Medio">2° Medio</option>
+              <option value="3° Medio">3° Medio</option>
+              <option value="4° Medio">4° Medio</option>
+              <option value="Egresado EM">Egresado EM</option>
+              <option value="Otra">Otra</option>
+            </select>
+            <div class="err-msg" id="err-nivelEM">Selecciona tu nivel de estudio</div>
+          </div>
+          <div class="grp">
+            <label>Colegio / Institución de procedencia</label>
+            <div id="f-colegio-container">
+              <!-- Se renderiza dinámicamente según si hay colegios asociados -->
+              <input type="text" id="f-colegio" placeholder="Ej: Liceo A-1 Javiera Carrera">
+            </div>
+            <div class="hint" id="f-colegio-hint">Si ya terminaste el colegio y estudias en otra institución, ingresa esta última.</div>
+          </div>
+
+          <div id="custom-fields-wrap"></div>
+
+          <div class="grp-title">Comentarios adicionales</div>
+          <div class="grp">
+            <label>¿Algún mensaje para nuestro equipo?</label>
+            <textarea id="f-comentarios" placeholder="Opcional — consultas, preferencia de contacto, etc."></textarea>
+          </div>
+
+          <!-- Política de privacidad (obligatorio) -->
+          <div style="margin: 24px 0; padding: 16px; background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px;">
+            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none;">
+              <input type="checkbox" id="f-privacidad" required style="margin-top: 2px; width: 18px; height: 18px; cursor: pointer; accent-color: #2563EB; flex-shrink: 0;">
+              <span style="font-size: 12px; line-height: 1.6; color: #475569;">
+                Al completar y enviar este formulario, usted acepta recibir información relacionada con carreras y/o programas de interés que imparte la <strong>Universidad Academia de Humanismo Cristiano</strong>. Además, declara haber tomado conocimiento de nuestra política de protección de datos, disponible en el siguiente enlace: <a href="https://www.academia.cl/privacidad/" target="_blank" style="color: #2563EB; text-decoration: underline;">Política de Protección de Datos</a>. Agradecemos su interés y estamos aquí para apoyarle en su camino académico. <span style="color: #DC2626;">*</span>
+              </span>
+            </label>
+            <div class="err-msg" id="err-privacidad" style="margin-top: 8px;">Debes aceptar la política de privacidad para continuar</div>
+          </div>
+
+          <button type="submit" class="btn-submit" id="btn-submit" onclick="enviarForm()">
+            📨 Enviar registro
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Pantalla GRACIAS -->
+    <div id="screen-success" class="screen">
+      <div class="success-box">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div class="success-title">¡Gracias por tu interés!</div>
+        <div class="success-msg">
+          Hemos recibido tus datos correctamente.<br>
+          Un asesor de Admisión te contactará pronto.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-note">
+    UAcademia · Universidad Academia de Humanismo Cristiano<br>
+    Tus datos son tratados según nuestra política de privacidad.
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// CONFIG FIREBASE — misma proyecto que el CRM
+// ══════════════════════════════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAvZVIYttbF3v1raqOEoHwd4t0Liu8oNKE",
+  authDomain: "uacademia-crm.firebaseapp.com",
+  projectId: "uacademia-crm",
+  storageBucket: "uacademia-crm.firebasestorage.app",
+  messagingSenderId: "788472738103",
+  appId: "1:788472738103:web:996ebcc18e08040c386ab2"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+const FB_COLLECTION = 'uacademia';
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CATÁLOGO DE CARRERAS — sincronizado con CRM
+// ══════════════════════════════════════════════════════════════════════════════
+const CARRERA_CATALOGO = [
+  { nombre: 'Programa Especial de Licenciatura en Artes (A Distancia)', modalidad: 'A Distancia', grupo: 'Advance — Facultad de Artes' },
+  { nombre: 'Programa Especial de Titulación en Administración Pública (A Distancia)', modalidad: 'A Distancia', grupo: 'Advance — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Programa Especial de Titulación en Auditoría (A Distancia)', modalidad: 'A Distancia', grupo: 'Advance — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Programa Especial de Titulación en Ingeniería Comercial (A Distancia)', modalidad: 'A Distancia', grupo: 'Advance — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Programa Especial de Titulación en Sociología (Semi Presencial)', modalidad: 'Semi Presencial', grupo: 'Advance — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Programa Especial de Titulación en Trabajo Social (Semi Presencial)', modalidad: 'Semi Presencial', grupo: 'Advance — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Programa de Segunda Titulación en Arqueología (Vespertina)', modalidad: 'Vespertina', grupo: 'Advance — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Programa de Segunda Titulación en Psicología (Vespertina)', modalidad: 'Vespertina', grupo: 'Advance — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Programa de Segunda Titulación Pedagogía en Ed. Diferencial (Vespertina)', modalidad: 'Vespertina', grupo: 'Advance — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Arquitectura (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Artes' },
+  { nombre: 'Artes y Oficios (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Artes' },
+  { nombre: 'Cine y Artes Audiovisuales (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Artes' },
+  { nombre: 'Composición Musical (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Artes' },
+  { nombre: 'Danza (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Artes' },
+  { nombre: 'Interpretación Musical (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Artes' },
+  { nombre: 'Producción Musical (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Artes' },
+  { nombre: 'Teatro (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Artes' },
+  { nombre: '⭐ Animación Digital (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Artes' },
+  { nombre: 'Antropología (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Ciencia Política y Relaciones Internacionales (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Derecho (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Ingeniería Civil Industrial (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Ingeniería en Informática y Ciencias de Datos (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Psicología (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Trabajo Social (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Derecho (Vespertina)', modalidad: 'Vespertina', grupo: 'Pregrado — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Psicología (Vespertina)', modalidad: 'Vespertina', grupo: 'Pregrado — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Trabajo Social (Vespertina)', modalidad: 'Vespertina', grupo: 'Pregrado — Facultad de Ciencias Sociales y Educación' },
+  { nombre: 'Enfermería (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Salud y Buen Vivir' },
+  { nombre: 'Kinesiología (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Salud y Buen Vivir' },
+  { nombre: 'Medicina Veterinaria (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Salud y Buen Vivir' },
+  { nombre: 'Obstetricia (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Salud y Buen Vivir' },
+  { nombre: 'Química y Farmacia (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Salud y Buen Vivir' },
+  { nombre: 'Tecnología Médica (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Salud y Buen Vivir' },
+  { nombre: 'Terapia Ocupacional (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Salud y Buen Vivir' },
+  { nombre: '⭐ Medicina (Diurna)', modalidad: 'Diurna', grupo: 'Pregrado — Facultad de Salud y Buen Vivir' },
+];
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VALIDADORES
+// ══════════════════════════════════════════════════════════════════════════════
+function limpiarRut(rut) {
+  return String(rut || '').replace(/[.\s]/g, '').toUpperCase();
+}
+// ══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+
+function formatearRut(rut) {
+  const r = limpiarRut(rut).replace(/-/g, '');
+  if (r.length < 2) return rut;
+  const cuerpo = r.slice(0, -1), dv = r.slice(-1);
+  // Agregar puntos cada 3 dígitos desde la derecha
+  let formateado = '';
+  for (let i = cuerpo.length; i > 0; i -= 3) {
+    formateado = cuerpo.slice(Math.max(0, i - 3), i) + (formateado ? '.' + formateado : '');
+  }
+  return formateado + '-' + dv;
+}
+function validarRut(rut) {
+  // Valida RUT chileno con dígito verificador Módulo 11
+  const r = limpiarRut(rut).replace(/-/g, '');
+  if (!/^\d{7,8}[0-9K]$/.test(r)) return false;
+  const cuerpo = r.slice(0, -1), dv = r.slice(-1);
+  let suma = 0, multi = 2;
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo[i]) * multi;
+    multi = multi === 7 ? 2 : multi + 1;
+  }
+  const resto = 11 - (suma % 11);
+  const dvCalc = resto === 11 ? '0' : resto === 10 ? 'K' : String(resto);
+  return dvCalc === dv;
+}
+function validarEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+}
+function validarTel(tel) {
+  const t = String(tel || '').replace(/[^\d+]/g, '');
+  return t.length >= 8; // mínimo 8 dígitos
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════════════════════════════════════════
+let actividadActual = null; // { id, promoId, nombre, tipo, fecha, ... }
+let customFields = []; // campos personalizados definidos por el admin
+let carrerasSeleccionadas = []; // [{ nombre, modalidad }] — múltiples carreras elegidas por el usuario
+const MAX_CARRERAS = 5;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CARRERAS MÚLTIPLES — chips con remove
+// ══════════════════════════════════════════════════════════════════════════════
+function agregarCarrera(nombre) {
+    if (!nombre) return;
+    if (carrerasSeleccionadas.length >= MAX_CARRERAS) {
+        alert(`Puedes seleccionar hasta ${MAX_CARRERAS} carreras. Elimina una antes de agregar otra.`);
+        return;
+    }
+    if (carrerasSeleccionadas.find(c => c.nombre === nombre)) {
+        return; // ya está seleccionada
+    }
+    const carrera = CARRERA_CATALOGO.find(c => c.nombre === nombre);
+    if (!carrera) return;
+    carrerasSeleccionadas.push({ nombre: carrera.nombre, modalidad: carrera.modalidad });
+    renderCarrerasChips();
+    limpiarErrores(); // si había error "falta carrera", se limpia
+}
+
+function removerCarrera(idx) {
+    carrerasSeleccionadas.splice(idx, 1);
+    renderCarrerasChips();
+}
+
+function renderCarrerasChips() {
+    const wrap = document.getElementById('f-carreras-chips');
+    const placeholder = document.getElementById('f-carreras-placeholder');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+
+    if (!carrerasSeleccionadas.length) {
+        wrap.innerHTML = '<div style="color:#94A3B8;font-size:11px;text-align:center;padding:6px">Selecciona una o más carreras del menú superior</div>';
+        return;
+    }
+
+    carrerasSeleccionadas.forEach((c, idx) => {
+        const chip = document.createElement('div');
+        const isPrincipal = idx === 0;
+        chip.style.cssText = `display:flex;align-items:center;gap:8px;padding:8px 10px;background:${isPrincipal?'#EFF6FF':'#F1F5F9'};border:1.5px solid ${isPrincipal?'#BFDBFE':'#E2E8F0'};border-radius:8px`;
+        chip.innerHTML = `
+            <span style="flex:1;font-size:12px;color:#0F172A;font-weight:${isPrincipal?'600':'500'}">${c.nombre}</span>
+            ${isPrincipal ? '<span style="font-size:9px;font-weight:700;color:#1D4ED8;background:#DBEAFE;padding:2px 6px;border-radius:4px;letter-spacing:.3px">PRINCIPAL</span>' : ''}
+            <button type="button" onclick="removerCarrera(${idx})" style="background:none;border:none;color:#94A3B8;cursor:pointer;padding:2px 6px;font-size:14px;line-height:1" title="Quitar">×</button>
+        `;
+        wrap.appendChild(chip);
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NAVEGACIÓN DE PANTALLAS
+// ══════════════════════════════════════════════════════════════════════════════
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function mostrarError(titulo, mensaje) {
+    document.getElementById('err-title').textContent = titulo;
+    document.getElementById('err-msg').textContent = mensaje;
+    showScreen('error');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CARGAR ACTIVIDAD DESDE FIREBASE
+// ══════════════════════════════════════════════════════════════════════════════
+async function cargarActividad() {
+  const params = new URLSearchParams(location.search);
+  const actId = params.get('act');
+
+  if (!actId) {
+    mostrarError('Falta identificador de actividad',
+      'El link que usaste no incluye una actividad. Verifica el link o pídele uno nuevo a Admisión.');
+    return;
+  }
+
+  try {
+    // Leer documento maestro de actividades
+    const snap = await db.collection(FB_COLLECTION).doc('promo_data').get();
+    if (!snap.exists) {
+      mostrarError('Formulario no disponible', 'No pudimos cargar la información del evento. Intenta más tarde.');
+      return;
+    }
+
+    const data = snap.data();
+    let actividades = [];
+    if (data.shardCount && data.shardCount > 1) {
+      // Leer shards
+      const shardSnaps = await Promise.all(
+        Array.from({ length: data.shardCount }, (_, i) =>
+          db.collection(FB_COLLECTION).doc(`promo_data_shard_${i}`).get()
+        )
+      );
+      actividades = shardSnaps.flatMap(s => {
+        if (!s.exists) return [];
+        try { return JSON.parse(s.data().actividades || '[]'); }
+        catch (e) { return []; }
+      });
+    } else {
+      actividades = JSON.parse(data.actividades || '[]');
+    }
+
+    // Buscar por promoId (ej: ACT-0001) o id interno
+    const act = actividades.find(a => a.promoId === actId || a.id === actId);
+    if (!act) {
+      mostrarError('Actividad no encontrada',
+        'Este link no corresponde a una actividad válida. Pide un nuevo link a Admisión.');
+      return;
+    }
+
+    // Verificar expiración: si la actividad tiene fecha y es anterior a hoy → rechazar
+    if (act.fecha) {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const fechaAct = new Date(act.fecha + 'T23:59:59');
+      if (fechaAct < hoy) {
+        mostrarError('Formulario expirado',
+          `Este formulario estuvo vigente para "${act.nombre || act.nombreFeria}" el ${act.fecha}. El link ya no acepta nuevos registros.`);
+        return;
+      }
+    }
+
+    // Verificar estado: si la actividad está cancelada/rechazada → rechazar
+    if (act.estado === 'Cancelada' || act.estado === 'Rechazada') {
+      mostrarError('Formulario cerrado',
+        'Esta actividad fue cancelada. Pídele un nuevo link a Admisión.');
+      return;
+    }
+
+    actividadActual = act;
+    customFields = Array.isArray(act.customFormFields) ? act.customFormFields : [];
+    prepararFormulario();
+
+  } catch (e) {
+    console.error(e);
+    mostrarError('Error de conexión',
+      'No pudimos conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PREPARAR FORMULARIO
+// ══════════════════════════════════════════════════════════════════════════════
+function prepararFormulario() {
+    // Mostrar nombre de actividad
+    const fechaFmt = actividadActual.fecha
+        ? actividadActual.fecha.split('-').reverse().join('/')
+        : '';
+    document.getElementById('activity-name').textContent =
+        (actividadActual.nombre || actividadActual.nombreFeria || 'Actividad')
+        + (fechaFmt ? ` · ${fechaFmt}` : '');
+
+    // ── Filtro de secciones según parámetro URL ──
+    const params = new URLSearchParams(location.search);
+    const seccionesFiltro = params.get('secciones');
+    let catalogoFiltrado = CARRERA_CATALOGO;
+    
+    if (seccionesFiltro) {
+        const secciones = seccionesFiltro.split(',').map(s => s.trim().toLowerCase());
+        catalogoFiltrado = CARRERA_CATALOGO.filter(c => {
+            const grupo = c.grupo.toLowerCase();
+            // Determinar a qué sección pertenece según el prefijo del grupo
+            if (grupo.startsWith('advance')) {
+                return secciones.includes('advance');
+            } else if (grupo.startsWith('pregrado')) {
+                return secciones.includes('pregrado');
+            }
+            return true; // si no matchea ninguno, incluir por defecto
+        });
+    }
+
+    // Poblar picker de carreras (agrupadas) — ahora con chips múltiples y filtrado
+    const picker = document.getElementById('f-carrera-picker');
+    const grupos = {};
+    catalogoFiltrado.forEach(c => {
+        if (!grupos[c.grupo]) grupos[c.grupo] = [];
+        grupos[c.grupo].push(c);
+    });
+    Object.entries(grupos).forEach(([grupo, lista]) => {
+        const og = document.createElement('optgroup');
+        og.label = grupo;
+        lista.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.nombre;
+            opt.dataset.modalidad = c.modalidad;
+            opt.textContent = c.nombre;
+            og.appendChild(opt);
+        });
+        picker.appendChild(og);
+    });
+
+    // ── Colegios Asociados (si existen, renderizar como selector) ──
+    const colegiosParam = params.get('colegios');
+    let colegiosAsociados = [];
+    let colegioSeleccionado = false;
+    
+    if (colegiosParam) {
+        try {
+            colegiosAsociados = JSON.parse(decodeURIComponent(colegiosParam));
+        } catch(e) {
+            console.warn('[Form] Error parseando colegios asociados:', e);
+        }
+    }
+    
+    if (colegiosAsociados.length > 0) {
+        // Renderizar como selector en lugar de input de texto
+        const container = document.getElementById('f-colegio-container');
+        if (container) {
+            container.innerHTML = `
+                <select id="f-colegio" style="width:100%; padding:11px 14px; border:1.5px solid #E2E8F0; border-radius:8px; font-family:inherit; font-size:14px; background:#fff; cursor:pointer">
+                    <option value="">— Selecciona tu colegio —</option>
+                    ${colegiosAsociados.map(c => 
+                        `<option value="${escapeHtml(c.nombre)}" data-rbd="${escapeHtml(c.rbd || '')}">${escapeHtml(c.nombre)}${c.rbd ? ' (RBD: '+c.rbd+')' : ''}</option>`
+                    ).join('')}
+                    <option value="__OTRO__">Otro (escribir manualmente)</option>
+                </select>
+            `;
+            
+            // Event listener para mostrar input manual si selecciona "Otro"
+            const selector = document.getElementById('f-colegio');
+            if (selector) {
+                selector.addEventListener('change', function() {
+                    if (this.value === '__OTRO__') {
+                        container.innerHTML = '<input type="text" id="f-colegio" placeholder="Escribe el nombre de tu colegio/institución" style="width:100%; padding:11px 14px; border:1.5px solid #E2E8F0; border-radius:8px; font-family:inherit; font-size:14px">';
+                    }
+                });
+            }
+            
+            colegioSeleccionado = true;
+        }
+    }
+
+    // ── Pre-carga de RBD y Colegio desde parámetros URL (actividades municipalidad) ──
+    const rbdParam = params.get('rbd');
+    const colegioParam = params.get('colegio');
+    
+    if (!colegioSeleccionado && (rbdParam || colegioParam)) {
+        const colegioInp = document.getElementById('f-colegio');
+        const colegioHint = document.getElementById('f-colegio-hint');
+        
+        if (colegioParam && colegioInp) {
+            colegioInp.value = colegioParam;
+            colegioInp.style.background = '#F0FDF4';
+            colegioInp.style.borderColor = '#BBF7D0';
+            if (colegioHint) {
+                colegioHint.innerHTML = '✓ <span style="color:#15803D">Pre-completado automáticamente. Puedes editarlo si es incorrecto.</span>';
+                colegioHint.style.color = '#15803D';
+            }
+        }
+        
+        // El RBD se guarda automáticamente en el payload desde actividadActual.rbd
+        // (ya implementado en línea 698 del form.html actual)
+    }
+
+    // ── Auto-completar colegio con el Organizador de la actividad ──
+    // NOTA: Esta lógica se ejecuta solo si NO vino pre-cargado desde URL NI hay colegios asociados
+    if (!colegioParam && !colegioSeleccionado) {
+        const colegioInp = document.getElementById('f-colegio');
+        const colegioHint = document.getElementById('f-colegio-hint');
+        const organizador = (actividadActual.organizador || '').trim();
+        const tipo = (actividadActual.tipo || '').toLowerCase();
+        // Tipos de actividad donde el organizador suele ser el colegio/institución
+        const esActividadEnColegio = tipo.includes('colegio') ||
+                                     tipo.includes('feria') ||
+                                     tipo.includes('visita') ||
+                                     tipo.includes('charla');
+        if (esActividadEnColegio && organizador) {
+            colegioInp.value = organizador;
+            colegioInp.style.background = '#F0FDF4';
+            colegioInp.style.borderColor = '#BBF7D0';
+            if (colegioHint) {
+                colegioHint.innerHTML = '✓ <span style="color:#15803D">Pre-completado con el organizador de la actividad. Puedes editarlo si es incorrecto.</span>';
+                colegioHint.style.color = '#15803D';
+            }
+        }
+    }
+
+    // Format RUT mientras escribe
+    const rutInp = document.getElementById('f-rut');
+    rutInp.addEventListener('blur', () => {
+        if (rutInp.value.trim()) rutInp.value = formatearRut(rutInp.value);
+    });
+
+    // Renderizar campos personalizados (si la actividad los definió)
+    renderCustomFields();
+
+    // Inicializar chips vacíos
+    renderCarrerasChips();
+
+    showScreen('form');
+}
+
+function renderCustomFields() {
+  const wrap = document.getElementById('custom-fields-wrap');
+  wrap.innerHTML = '';
+  if (!customFields.length) return;
+  const titulo = document.createElement('div');
+  titulo.className = 'grp-title';
+  titulo.textContent = 'Información adicional';
+  wrap.appendChild(titulo);
+  customFields.forEach((f, idx) => {
+    const g = document.createElement('div');
+    g.className = 'grp';
+    const req = f.required ? ' <span class="req">*</span>' : '';
+    const hint = f.hint ? `<div class="hint">${f.hint}</div>` : '';
+    let input;
+    if (f.type === 'textarea') {
+      input = `<textarea id="f-cf-${idx}" ${f.required ? 'required' : ''}></textarea>`;
+    } else if (f.type === 'select' && Array.isArray(f.options)) {
+      const opts = f.options.map(o => `<option value="${o}">${o}</option>`).join('');
+      input = `<select id="f-cf-${idx}" ${f.required ? 'required' : ''}><option value="">— Selecciona —</option>${opts}</select>`;
+    } else {
+      input = `<input type="${f.type || 'text'}" id="f-cf-${idx}" ${f.required ? 'required' : ''}>`;
+    }
+    g.innerHTML = `<label>${f.label}${req}</label>${input}${hint}<div class="err-msg" id="err-cf-${idx}">Campo obligatorio</div>`;
+    wrap.appendChild(g);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VALIDAR + ENVIAR
+// ══════════════════════════════════════════════════════════════════════════════
+function limpiarErrores() {
+  document.querySelectorAll('.err-msg').forEach(e => e.classList.remove('show'));
+  document.querySelectorAll('input.error, select.error').forEach(e => e.classList.remove('error'));
+}
+function marcarError(id, msgId, mensaje) {
+  document.getElementById(id).classList.add('error');
+  const m = document.getElementById(msgId);
+  if (mensaje) m.textContent = mensaje;
+  m.classList.add('show');
+}
+
+async function enviarForm() {
+    limpiarErrores();
+
+    const getVal = id => document.getElementById(id).value.trim();
+    const rut       = getVal('f-rut');
+    const nombres   = getVal('f-nombres');
+    const apPaterno = getVal('f-apPaterno');
+    const apMaterno = getVal('f-apMaterno');
+    const email     = getVal('f-email');
+    const tel1      = getVal('f-tel1');
+    const nivelEM   = getVal('f-nivelEM');
+    const colegio   = getVal('f-colegio');
+    const coment    = getVal('f-comentarios');
+    const privacidadOk = document.getElementById('f-privacidad').checked;
+
+    // Validaciones
+    let ok = true;
+    if (!validarRut(rut)) {
+        marcarError('f-rut', 'err-rut', 'RUT inválido. Verifica el dígito verificador.');
+        ok = false;
+    }
+    if (!nombres) { marcarError('f-nombres', 'err-nombres', 'Ingresa tus nombres'); ok = false; }
+    if (!apPaterno) { marcarError('f-apPaterno', 'err-apPaterno', 'Ingresa tu apellido paterno'); ok = false; }
+    if (!validarEmail(email)) { marcarError('f-email', 'err-email', 'Email inválido'); ok = false; }
+    if (!validarTel(tel1)) { marcarError('f-tel1', 'err-tel1', 'Teléfono inválido'); ok = false; }
+    if (!nivelEM) { marcarError('f-nivelEM', 'err-nivelEM', 'Selecciona tu nivel de estudio'); ok = false; }
+    if (!privacidadOk) {
+        document.getElementById('err-privacidad').classList.add('show');
+        ok = false;
+    }
+    if (!carrerasSeleccionadas.length) {
+        // Resaltar el contenedor de chips
+        const wrap = document.getElementById('f-carreras-chips');
+        if (wrap) wrap.style.borderColor = '#DC2626';
+        document.getElementById('err-carrera').classList.add('show');
+        ok = false;
+    }
+
+    // Validar campos personalizados obligatorios
+    const cfValues = {};
+    customFields.forEach((f, idx) => {
+        const v = document.getElementById(`f-cf-${idx}`)?.value?.trim() || '';
+        cfValues[f.label] = v;
+        if (f.required && !v) {
+            marcarError(`f-cf-${idx}`, `err-cf-${idx}`, 'Campo obligatorio');
+            ok = false;
+        }
+    });
+
+    if (!ok) {
+        // Scroll al primer error
+        const first = document.querySelector('input.error, select.error, #f-carreras-chips[style*="DC2626"]');
+        if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    // Deshabilitar botón durante envío
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.textContent = '⏳ Enviando…';
+
+    // Construir payload — carreras como ARRAY con principal + secundarias
+    const payload = {
+        rut: limpiarRut(rut).replace(/-/g, '-'), // RUT sin puntos, con guión
+        nombres, apPaterno, apMaterno,
+        email,
+        tel1,
+        // Carreras múltiples — la primera es la principal
+        carreras: carrerasSeleccionadas.map((c, idx) => ({
+            nombre: c.nombre,
+            modalidad: c.modalidad,
+            principal: idx === 0,
+            prioridad: idx + 1
+        })),
+        // Mantener campos de retrocompatibilidad (la primera carrera)
+        carrera: carrerasSeleccionadas[0]?.nombre || '',
+        modalidad: carrerasSeleccionadas[0]?.modalidad || '',
+        nivelEM,
+        colegio: colegio || null,
+        comentarios: coment || null,
+        privacidadAutorizada: privacidadOk, // ← flag para guardar en historial
+        customFields: cfValues,
+        // Metadata de la actividad
+        actividadId:     actividadActual.id,
+        actividadPromoId: actividadActual.promoId,
+        actividadNombre: actividadActual.nombre || actividadActual.nombreFeria,
+        actividadFecha:  actividadActual.fecha,
+        actividadTipo:   actividadActual.tipo,
+        actividadOrganizador: actividadActual.organizador || '',
+        actividadRbd:    actividadActual.rbd || '',
+        origen: 'Formulario Web',
+        _submittedAt: new Date().toISOString(),
+        _processed:   false, // el CRM lo procesa y marca como true
+        _userAgent:   navigator.userAgent.slice(0, 200),
+    };
+
+    try {
+        // Guardar en pending_leads — el CRM lo recogerá y convertirá en lead real
+        await db.collection(FB_COLLECTION)
+            .doc('pending_leads')
+            .collection('items')
+            .add(payload);
+
+        showScreen('success');
+    } catch (e) {
+        console.error('Error enviando:', e);
+        btn.disabled = false;
+        btn.textContent = '📨 Enviar registro';
+        alert('No pudimos enviar tus datos. Verifica tu conexión e inténtalo de nuevo. Detalle: ' + (e.message || e));
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+cargarActividad();
+</script>
+
+</body>
+</html>
