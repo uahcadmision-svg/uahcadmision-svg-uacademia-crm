@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario de Inscripción · UAcademia</title>
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #0F172A;
+    }
+    
+    .form-container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    
+    /* Header */
+    .form-header {
+      background: linear-gradient(135deg, #EEF2FF 0%, #F0F9FF 100%);
+      padding: 28px 32px;
+      border-bottom: 1px solid #E5E7EB;
+    }
+    
+    .uacademia-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .uacademia-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    
+    .uacademia-logo-text {
+      font-weight: 800;
+      font-size: 16px;
+      color: #0F172A;
+    }
+    
+    .uacademia-logo-sub {
+      font-size: 11px;
+      color: #6366F1;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    
+    .form-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #6366F1;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+    
+    .form-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0F172A;
+      line-height: 1.3;
+      margin-bottom: 6px;
+    }
+    
+    .form-subtitle {
+      font-size: 13px;
+      color: #64748B;
+    }
+    
+    /* Body */
+    .form-body {
+      padding: 32px;
+    }
+    
+    .form-section {
+      margin-bottom: 28px;
+    }
+    
+    .form-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #E5E7EB;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 14px;
+    }
+    
+    @media (max-width: 600px) {
+      .form-grid-2, .form-grid-3 {
+        grid-template-columns: 1fr;
+      }
+      .form-body { padding: 20px; }
+      .form-header { padding: 20px; }
+    }
+    
+    .form-field { display: flex; flex-direction: column; }
+    
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .form-label-required { color: #EF4444; font-weight: 700; }
+    
+    .form-input,
+    .form-select {
+      padding: 11px 14px;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: #0F172A;
+      background: #fff;
+      transition: all 0.15s;
+      width: 100%;
+    }
+    
+    .form-input:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: #6366F1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    }
+    
+    .form-input[readonly] {
+      background: #F8FAFC;
+      color: #64748B;
+      cursor: not-allowed;
+    }
+    
+    /* Carreras */
+    .carreras-info {
+      font-size: 12px;
+      color: #64748B;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      background: #FEF3C7;
+      border-radius: 7px;
+      border-left: 3px solid #F59E0B;
+    }
+    
+    .carreras-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 8px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 12px;
+      background: #FAFBFC;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+    }
+    
+    .carrera-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      background: #fff;
+      border: 1px solid #E5E7EB;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    
+    .carrera-item:hover {
+      background: #F8FAFC;
+      border-color: #C7D2FE;
+    }
+    
+    .carrera-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #6366F1;
+      flex-shrink: 0;
+    }
+    
+    .carrera-item-text {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .carrera-name {
+      font-size: 12px;
+      color: #1E293B;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+    
+    .carrera-tag {
+      font-size: 10px;
+      color: #94A3B8;
+      margin-top: 3px;
+      display: none;
+      font-weight: 600;
+    }
+    
+    .contador-carreras {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6366F1;
+      background: #EEF2FF;
+      padding: 4px 10px;
+      border-radius: 5px;
+      display: inline-block;
+      margin-left: auto;
+    }
+    
+    .section-title-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    /* Footer */
+    .form-footer {
+      padding: 24px 32px;
+      background: #FAFBFC;
+      border-top: 1px solid #E5E7EB;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .footer-note {
+      font-size: 12px;
+      color: #64748B;
+    }
+    
+    .btn-submit {
+      padding: 12px 28px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      color: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+      transition: all 0.15s;
+    }
+    
+    .btn-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(99,102,241,0.45);
+    }
+    
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    /* Loading state */
+    .loading-state {
+      padding: 80px 20px;
+      text-align: center;
+    }
+    
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #E5E7EB;
+      border-top-color: #6366F1;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Estado de éxito */
+    .success-state {
+      padding: 60px 32px;
+      text-align: center;
+    }
+    
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #10B981, #059669);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 40px;
+      box-shadow: 0 10px 30px rgba(16,185,129,0.3);
+    }
+    
+    .success-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0F172A;
+      margin-bottom: 12px;
+    }
+    
+    .success-text {
+      font-size: 14px;
+      color: #64748B;
+      max-width: 400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    /* Estado de error */
+    .error-state {
+      padding: 60px 32px;
+      text-align: center;
+    }
+    
+    .error-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #EF4444, #DC2626);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 40px;
+    }
+    
+    /* Powered by */
+    .powered-by {
+      text-align: center;
+      padding: 16px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.8);
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="form-container">
+    
+    <!-- Estado de carga inicial -->
+    <div id="state-loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <div style="font-size:14px; color:#64748B; font-weight:500">Cargando formulario...</div>
+    </div>
+    
+    <!-- Estado de error -->
+    <div id="state-error" style="display:none">
+      <div class="error-state">
+        <div class="error-icon">⚠️</div>
+        <div class="success-title">No se pudo cargar el formulario</div>
+        <div class="success-text" id="error-message">
+          El enlace que estás usando no es válido o ha expirado.
+        </div>
+      </div>
+    </div>
+    
+    <!-- Formulario -->
+    <div id="state-form" style="display:none">
+      
+      <!-- Header -->
+      <div class="form-header">
+        <div class="uacademia-logo">
+          <div class="uacademia-logo-icon">U</div>
+          <div>
+            <div class="uacademia-logo-text">UAcademia</div>
+            <div class="uacademia-logo-sub">ADMISIÓN 2027</div>
+          </div>
+        </div>
+        <div class="form-tag">📝 Formulario de Inscripción</div>
+        <div class="form-title" id="form-title-act">—</div>
+        <div class="form-subtitle" id="form-subtitle-act">—</div>
+      </div>
+      
+      <!-- Body -->
+      <div class="form-body">
+        
+        <!-- Sección Datos Personales -->
+        <div class="form-section">
+          <div class="form-section-title">👤 Datos Personales</div>
+          
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="form-label">Nombres <span class="form-label-required">*</span></label>
+              <input id="f-nombres" type="text" class="form-input" placeholder="Ej: Juan Pablo">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Apellido Paterno <span class="form-label-required">*</span></label>
+              <input id="f-ap-paterno" type="text" class="form-input" placeholder="Ej: González">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Apellido Materno</label>
+              <input id="f-ap-materno" type="text" class="form-input" placeholder="Ej: Pérez">
+            </div>
+            <div class="form-field">
+              <label class="form-label">RUT <span class="form-label-required">*</span></label>
+              <input id="f-rut" type="text" class="form-input" placeholder="12.345.678-9" oninput="formatearRut(this)">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Email <span class="form-label-required">*</span></label>
+              <input id="f-email" type="email" class="form-input" placeholder="ejemplo@correo.cl">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Teléfono <span class="form-label-required">*</span></label>
+              <input id="f-telefono" type="tel" class="form-input" placeholder="+56912345678">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Fecha Nacimiento <span class="form-label-required">*</span></label>
+              <input id="f-fecha-nac" type="date" class="form-input">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Nivel de Estudio Medio <span class="form-label-required">*</span></label>
+              <select id="f-nivel-estudio" class="form-select">
+                <option value="">Selecciona un nivel</option>
+                <option value="1° Medio">1° Medio</option>
+                <option value="2° Medio">2° Medio</option>
+                <option value="3° Medio">3° Medio</option>
+                <option value="4° Medio">4° Medio</option>
+                <option value="Egresado">Egresado</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sección Colegio (se muestra solo para tipo Colegio o Municipalidad) -->
+        <div class="form-section" id="f-seccion-colegio">
+          <div class="form-section-title">🏫 Información del Colegio</div>
+          <div id="f-colegio-container">
+            <!-- Se llena dinámicamente -->
+          </div>
+        </div>
+        
+        <!-- Sección Carreras -->
+        <div class="form-section">
+          <div class="form-section-title section-title-flex">
+            <span>🎓 Carreras de Interés <span class="form-label-required">*</span></span>
+            <span class="contador-carreras" id="f-contador">0/5</span>
+          </div>
+          <div class="carreras-info">
+            💡 Selecciona hasta <strong>5 carreras</strong>. La primera marcada será considerada tu <strong>Carrera Principal</strong>.
+          </div>
+          <div id="f-carreras-lista" class="carreras-list">
+            <!-- Se llena dinámicamente -->
+          </div>
+        </div>
+        
+        <!-- Sección Comentarios o Preguntas (opcional, todos los tipos) -->
+        <div class="form-section">
+          <div class="form-section-title">💬 Comentarios o Preguntas</div>
+          <div style="font-size:12px; color:#64748B; margin-bottom:10px">
+            ¿Tienes alguna duda o comentario? Déjanos tu mensaje y un asesor te contactará.
+          </div>
+          <textarea id="f-comentarios" rows="4" placeholder="Escribe aquí tus comentarios o preguntas (opcional)..."
+            style="width:100%; padding:11px 14px; border:1.5px solid #E2E8F0; border-radius:8px; font-family:'Inter',sans-serif; font-size:14px; color:#0F172A; background:#fff; resize:vertical; min-height:90px; box-sizing:border-box"></textarea>
+        </div>
+        
+      </div>
+      
+      <!-- Footer -->
+      <div class="form-footer">
+        <div class="footer-note">
+          <span class="form-label-required">*</span> Campos obligatorios
+        </div>
+        <button id="btn-enviar" class="btn-submit" onclick="enviarFormulario()">
+          ✓ Enviar Formulario
+        </button>
+      </div>
+      
+    </div>
+    
+    <!-- Estado de éxito -->
+    <div id="state-success" style="display:none">
+      <div class="success-state">
+        <div class="success-icon">✓</div>
+        <div class="success-title">¡Inscripción enviada!</div>
+        <div class="success-text">
+          Hemos recibido tus datos correctamente.<br>
+          Un asesor de UAcademia se pondrá en contacto contigo a la brevedad.
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <div class="powered-by">
+    Powered by UAcademia · Universidad Academia de Humanismo Cristiano
+  </div>
+
+  <script>
+    // ══════════════════════════════════════════════════════════════════════════
+    // CONFIGURACIÓN FIREBASE (misma que el CRM)
+    // ══════════════════════════════════════════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvZVIYttbF3v1raqOEoHwd4t0Liu8oNKE",
+      authDomain: "uacademia-crm.firebaseapp.com",
+      projectId: "uacademia-crm",
+      storageBucket: "uacademia-crm.firebasestorage.app",
+      messagingSenderId: "788472738103",
+      appId: "1:788472738103:web:996ebcc18e08040c386ab2"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    // Variables globales
+    let actividadActual = null;
+    let carrerasSeleccionadas = []; // Max 5, primera = principal
+    
+    // ══════════════════════════════════════════════════════════════════════════
+    // MOSTRAR ESTADO
+    // ══════════════════════════════════════════════════════════════════════════
+    function mostrarEstado(estado) {
+      document.getElementById('state-loading').style.display = 'none';
+      document.getElementById('state-error').style.display = 'none';
+      document.getElementById('state-form').style.display = 'none';
+      document.getElementById('state-success').style.display = 'none';
+      document.getElementById('state-' + estado).style.display = 'block';
+    }
+    
+    function mostrarError(mensaje) {
+      document.getElementById('error-message').textContent = mensaje || 'El enlace no es válido o ha expirado.';
+      mostrarEstado('error');
+    }
+    
+    // ══════════════════════════════════════════════════════════════════════════
+    // OBTENER ID DE ACTIVIDAD DESDE LA URL
+    // ══════════════════════════════════════════════════════════════════════════
+    function getActividadIdFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('act') || params.get('actividad') || null;
+    }
+    
+    // ══════════════════════════════════════════════════════════════════════════
+    // CARGAR ACTIVIDAD DESDE FIREBASE
+    // ══════════════════════════════════════════════════════════════════════════
+    // El CRM guarda las actividades en:
+    //   - Colección: 'uacademia'
+    //   - Documento principal: 'promo_data' con campo "actividades" (string JSON)
+    //   - Si hay shards: 'promo_data_shard_0', 'promo_data_shard_1', ...
+    //   - El doc principal tiene shardCount
+    // ══════════════════════════════════════════════════════════════════════════
+    
+    const FB_COLLECTION_NAME = 'uacademia';
+    
+    async function cargarActividad() {
+      const actId = getActividadIdFromURL();
+      
+      if (!actId) {
+        mostrarError('No se especificó una actividad en el enlace.');
+        return;
+      }
+      
+      console.log('[Form] 🔍 Buscando actividad:', actId);
+      console.log('[Form] 🔍 Colección:', FB_COLLECTION_NAME);
+      
+      try {
+        // Leer documento principal
+        const mainDoc = await db.collection(FB_COLLECTION_NAME).doc('promo_data').get();
+        
+        if (!mainDoc.exists) {
+          console.error('[Form] ✗ El documento promo_data no existe');
+          mostrarError('No se pudo conectar con la base de datos del CRM.');
+          return;
+        }
+        
+        const mainData = mainDoc.data();
+        console.log('[Form] 📊 ShardCount:', mainData.shardCount);
+        
+        let todasLasActividades = [];
+        
+        if (mainData.shardCount && mainData.shardCount > 1) {
+          // Hay múltiples shards: leerlos todos
+          console.log('[Form] 📦 Leyendo', mainData.shardCount, 'shards...');
+          
+          const shardPromises = [];
+          for (let i = 0; i < mainData.shardCount; i++) {
+            shardPromises.push(
+              db.collection(FB_COLLECTION_NAME).doc(`promo_data_shard_${i}`).get()
+            );
+          }
+          
+          const shardDocs = await Promise.all(shardPromises);
+          
+          shardDocs.forEach((snap, idx) => {
+            if (snap.exists) {
+              const shardData = snap.data();
+              try {
+                const actividadesShard = JSON.parse(shardData.actividades || '[]');
+                todasLasActividades = todasLasActividades.concat(actividadesShard);
+                console.log(`[Form] 📦 Shard ${idx}: ${actividadesShard.length} actividades`);
+              } catch (e) {
+                console.error(`[Form] Error parseando shard ${idx}:`, e);
+              }
+            }
+          });
+        } else {
+          // Sin shards: leer del doc principal
+          try {
+            todasLasActividades = JSON.parse(mainData.actividades || '[]');
+            console.log('[Form] 📊 Sin shards. Total:', todasLasActividades.length, 'actividades');
+          } catch (e) {
+            console.error('[Form] Error parseando actividades principales:', e);
+            mostrarError('Error al leer los datos del CRM.');
+            return;
+          }
+        }
+        
+        console.log('[Form] 📊 Total actividades en la base:', todasLasActividades.length);
+        
+        // Buscar la actividad por ID
+        const actividadEncontrada = todasLasActividades.find(a => 
+          a.id === actId || a.promoId === actId
+        );
+        
+        if (!actividadEncontrada) {
+          console.error('[Form] ✗ Actividad no encontrada:', actId);
+          console.error('[Form] IDs disponibles (primeros 5):', 
+            todasLasActividades.slice(0, 5).map(a => a.id || a.promoId)
+          );
+          mostrarError('La actividad solicitada no existe o no está disponible.');
+          return;
+        }
+        
+        actividadActual = actividadEncontrada;
+        console.log('[Form] ✓ Actividad cargada:', actividadActual);
+        
+        // Renderizar
+        renderizarFormulario();
+        mostrarEstado('form');
+        
+      } catch (error) {
+        console.error('[Form] ✗ Error cargando actividad:', error);
+        console.error('[Form] Error message:', error.message);
+        console.error('[Form] Error code:', error.code);
+        
+        if (error.code === 'permission-denied') {
+          mostrarError('No hay permisos para leer la base de datos. Verifica las reglas de Firestore.');
+        } else {
+          mostrarError('Hubo un problema al cargar el formulario: ' + error.message);
+        }
+      }
+    }
+    
+    // ══════════════════════════════════════════════════════════════════════════
+    // RENDERIZAR FORMULARIO CON DATOS DE LA ACTIVIDAD
+    // ══════════════════════════════════════════════════════════════════════════
+    function renderizarFormulario() {
+      // Título: usar promoId (ej: ACT-0082) si existe, sino el id técnico
+      const idMostrar = actividadActual.promoId || actividadActual.id || 'Sin ID';
+      const nombre = actividadActual.nombre || actividadActual.nombreInst || 'Actividad';
+      
+      document.getElementById('form-title-act').innerHTML = `<span style="color:#6366F1">${idMostrar}</span> · ${nombre}`;
+      
+      const fecha = actividadActual.fechaActividad || '';
+      const tipo = actividadActual.tipo || '';
+      document.getElementById('form-subtitle-act').textContent = [tipo, fecha].filter(Boolean).join(' · ');
+      
+      // Renderizar colegios
+      renderizarColegios();
+      
+      // Renderizar carreras
+      renderizarCarreras();
+    }
+    
+    // ══════════════════════════════════════════════════════════════════════════
+    // RENDERIZAR COLEGIOS - Lógica condicional según tipo de actividad
+    // ══════════════════════════════════════════════════════════════════════════
+    // Reglas:
+    //   - Tipo "Colegio" o "Municipalidad":
+    //       * Si HAY colegios asociados con datos válidos → mostrarlos (1=readonly, varios=select)
+    //       * Si NO hay colegios asociados → mostrar campos LIBRES para que el lead llene
+    //   - Tipo "Organización Social" o cualquier otro:
+    //       * Ocultar la sección completa
+    //       * Pero igual generar campos ocultos (vacíos) para que el form funcione
+    // ══════════════════════════════════════════════════════════════════════════
+    function renderizarColegios() {
+      const seccion = document.getElementById('f-seccion-colegio');
+      const container = document.getElementById('f-colegio-container');
+      
+      const tipo = (actividadActual.tipo || '').trim();
+      const tipoNormalizado = tipo.toLowerCase();
+      const mostrarSeccion = tipoNormalizado === 'colegio' || tipoNormalizado === 'municipalidad';
+      
+      console.log('[Form] 🏫 Tipo actividad:', tipo, '| Mostrar sección colegio:', mostrarSeccion);
+      
+      if (!mostrarSeccion) {
+        // Ocultar la sección entera
+        if (seccion) seccion.style.display = 'none';
+        
+        // Inputs ocultos vacíos para que el form siga funcionando
+        container.innerHTML = `
+          <input type="hidden" id="f-rbd" value="">
+          <input type="hidden" id="f-colegio" value="">
+        `;
+        return;
+      }
+      
+      // Mostrar la sección
+      if (seccion) seccion.style.display = 'block';
+      
+      const colegios = Array.isArray(actividadActual.colegiosAsociados) ? actividadActual.colegiosAsociados : [];
+      const validos = colegios.filter(c => c.rbd || c.nombre);
+      
+      let html = '';
+      
+      if (validos.length === 0) {
+        // ⭐ NO hay colegios asociados → CAMPOS LIBRES para que el lead los complete
+        const rbdAct = actividadActual.rbd || '';
+        const nombreInstAct = actividadActual.nombreInst || '';
+        
+        html = `
+          <div style="font-size:11px; color:#64748B; margin-bottom:10px; padding:8px 10px; background:#FEF3C7; border-radius:6px; border-left:3px solid #F59E0B">
+            ℹ️ Por favor, ingresa los datos de tu colegio.
+          </div>
+          <div class="form-grid-3">
+            <div class="form-field">
+              <label class="form-label">RBD Colegio</label>
+              <input id="f-rbd" type="text" class="form-input" value="${rbdAct}" placeholder="Ej: 12345-6">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Colegio <span class="form-label-required">*</span></label>
+              <input id="f-colegio" type="text" class="form-input" value="${nombreInstAct}" placeholder="Nombre de tu colegio">
+            </div>
+          </div>
+        `;
+      } else if (validos.length === 1) {
+        // 1 colegio → readonly
+        const c = validos[0];
+        html = `
+          <div class="form-grid-3">
+            <div class="form-field">
+              <label class="form-label">RBD Colegio</label>
+              <input id="f-rbd" type="text" class="form-input" value="${c.rbd || ''}" readonly>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Colegio</label>
+              <input id="f-colegio" type="text" class="form-input" value="${c.nombre || ''}" readonly>
+            </div>
+          </div>
+        `;
+      } else {
+        // Varios → desplegable
+        html = `
+          <div class="form-field">
+            <label class="form-label">Selecciona tu colegio <span class="form-label-required">*</span></label>
+            <select id="f-colegio-select" class="form-select" onchange="actualizarColegioSeleccionado()">
+              <option value="">-- Selecciona el colegio que asistes --</option>
+              ${validos.map((c, idx) => `
+                <option value="${idx}" data-rbd="${c.rbd || ''}" data-nombre="${(c.nombre || '').replace(/"/g, '&quot;')}">
+                  ${c.rbd ? 'RBD ' + c.rbd : 'Sin RBD'} — ${c.nombre || 'Sin nombre'}
+                </option>
+              `).join('')}
+            </select>
+            <input type="hidden" id="f-rbd" value="">
+            <input type="hidden" id="f-colegio" value="">
+          </div>
+        `;
+      }
+      
+      container.innerHTML = html;
+    }
+    
+    function actualizarColegioSeleccionado() {
+      const select = document.getElementById('f-colegio-select');
+      if (!select) return;
+      const opt = select.options[select.selectedIndex];
+      document.getElementById('f-rbd').value = opt?.dataset.rbd || '';
+      document.getElementById('f-colegio').value = opt?.dataset.nombre || '';
+    }
+    
+    // ══════════════════════════════════════════════════════════════════════════
+    // RENDERIZAR CARRERAS
+    // ══════════════════════════════════════════════════════════════════════════
+    function renderizarCarreras() {
+      const container = document.getElementById('f-carreras-lista');
+      const carreras = Array.isArray(actividadActual.carrerasAsociadas) ? actividadActual.carrerasAsociadas : [];
+      
+      if (carreras.length === 0) {
+        container.innerHTML = '<div style="padding:30px; text-align:center; color:#94A3B8; font-size:13px">⚠️ No hay carreras configuradas para esta actividad. Por favor, contacta al organizador.</div>';
+        document.getElementById('btn-enviar').disabled = true;
+        return;
+      }
+      
+      let html = '';
+      carreras.forEach((c) => {
+        const nombreEnc = encodeURIComponent(c.nombre);
+        const modalidadEnc = encodeURIComponent(c.modalidad || '');
+        html += `
+          <label class="carrera-item" data-nombre-enc="${nombreEnc}">
+            <input type="checkbox" onchange="toggleCarrera(this, '${nombreEnc}', '${modalidadEnc}')">
+            <div class="carrera-item-text">
+              <div class="carrera-name">${c.nombre}</div>
+              <div class="carrera-tag"></div>
+            </div>
+          </label>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+    
+    function toggleCarrera(checkbox, nombreEnc, modalidadEnc) {
+      const nombre = decodeURIComponent(nombreEnc);
+      const modalidad = decodeURIComponent(modalidadEnc);
+      
+      if (checkbox.checked) {
+        if (carrerasSeleccionadas.length >= 5) {
+          checkbox.checked = false;
+          alert('Solo puedes seleccionar hasta 5 carreras.');
+          return;
+        }
+        if (!carrerasSeleccionadas.some(c => c.nombre === nombre)) {
+          carrerasSeleccionadas.push({ nombre, modalidad });
+        }
+      } else {
+        carrerasSeleccionadas = carrerasSeleccionadas.filter(c => c.nombre !== nombre);
+      }
+      
+      actualizarEtiquetasCarreras();
+      actualizarContador();
+    }
+    
+    function actualizarEtiquetasCarreras() {
+      // Limpiar todas
+      document.querySelectorAll('.carrera-item').forEach(item => {
+        item.style.background = '#fff';
+        item.style.borderColor = '#E5E7EB';
+        const tag = item.querySelector('.carrera-tag');
+        if (tag) {
+          tag.style.display = 'none';
+          tag.textContent = '';
+        }
+      });
+      
+      const ordinales = ['🌟 Carrera Principal', '2ª opción', '3ª opción', '4ª opción', '5ª opción'];
+      const colores = [
+        { bg: '#FEF3C7', border: '#FCD34D', tagColor: '#D97706' },
+        { bg: '#EEF2FF', border: '#C7D2FE', tagColor: '#6366F1' },
+        { bg: '#EEF2FF', border: '#C7D2FE', tagColor: '#6366F1' },
+        { bg: '#EEF2FF', border: '#C7D2FE', tagColor: '#6366F1' },
+        { bg: '#EEF2FF', border: '#C7D2FE', tagColor: '#6366F1' }
+      ];
+      
+      carrerasSeleccionadas.forEach((c, idx) => {
+        const enc = encodeURIComponent(c.nombre);
+        const item = document.querySelector(`.carrera-item[data-nombre-enc="${enc}"]`);
+        if (!item) return;
+        item.style.background = colores[idx].bg;
+        item.style.borderColor = colores[idx].border;
+        const tag = item.querySelector('.carrera-tag');
+        if (tag) {
+          tag.textContent = ordinales[idx];
+          tag.style.color = colores[idx].tagColor;
+          tag.style.display = 'block';
+        }
+      });
+    }
+    
+    function actualizarContador() {
+      const c = document.getElementById('f-contador');
+      c.textContent = `${carrerasSeleccionadas.length}/5`;
+      if (carrerasSeleccionadas.length >= 5) {
+        c.style.background = '#FEF3C7';
+        c.style.color = '#D97706';
+      } else {
+        c.style.background = '#EEF2FF';
+        c.style.color = '#6366F1';
+      }
+    }
+    
+    // ══════════════════════════════════════════════════════════════════════════
+    // FORMATO DE RUT
+    // ══════════════════════════════════════════════════════════════════════════
+    function formatearRut(input) {
+      let v = input.value.replace(/[^0-9kK]/g, '').toUpperCase();
+      if (v.length < 2) { input.value = v; return; }
+      const dv = v.slice(-1);
+      const cuerpo = v.slice(0, -1);
+      let formato = '';
+      for (let i = cuerpo.length - 1, j = 0; i >= 0; i--, j++) {
+        if (j > 0 && j % 3 === 0) formato = '.' + formato;
+        formato = cuerpo[i] + formato;
+      }
+      input.value = `${formato}-${dv}`;
+    }
+    
+    // ══════════════════════════════════════════════════════════════════════════
+    // VALIDAR FORMULARIO
+    // ══════════════════════════════════════════════════════════════════════════
+    function validar() {
+      const errores = [];
+      const v = (id) => document.getElementById(id)?.value.trim();
+      
+      if (!v('f-nombres')) errores.push('Nombres');
+      if (!v('f-ap-paterno')) errores.push('Apellido Paterno');
+      if (!v('f-rut')) errores.push('RUT');
+      if (!v('f-email')) errores.push('Email');
+      if (!v('f-telefono')) errores.push('Teléfono');
+      if (!document.getElementById('f-fecha-nac')?.value) errores.push('Fecha de Nacimiento');
+      if (!document.getElementById('f-nivel-estudio')?.value) errores.push('Nivel de Estudio Medio');
+      
+      const email = v('f-email');
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errores.push('Email (formato inválido)');
+      
+      if (carrerasSeleccionadas.length === 0) errores.push('Al menos una Carrera de Interés');
+      
+      // Validación de colegio según tipo de actividad
+      const tipo = (actividadActual?.tipo || '').toLowerCase();
+      const requiereColegio = tipo === 'colegio' || tipo === 'municipalidad';
+      
+      if (requiereColegio) {
+        const colegios = Array.isArray(actividadActual.colegiosAsociados) ? actividadActual.colegiosAsociados : [];
+        const validos = colegios.filter(c => c.rbd || c.nombre);
+        
+        if (validos.length > 1) {
+          // Hay desplegable → debe haber elegido uno
+          const select = document.getElementById('f-colegio-select');
+          if (select && !select.value) errores.push('Colegio (debes seleccionar uno)');
+        } else if (validos.length === 0) {
+          // Campo libre → debe escribir el nombre del colegio
+          if (!v('f-colegio')) errores.push('Colegio (debes ingresar el nombre)');
+        }
+      }
+      
+      return errores;
+    }
+    
+    // ══════════════════════════════════════════════════════════════════════════
+    // ENVIAR FORMULARIO → GUARDAR EN FIREBASE (pending_leads)
+    // ══════════════════════════════════════════════════════════════════════════
+    async function enviarFormulario() {
+      const errores = validar();
+      if (errores.length > 0) {
+        alert('⚠️ Faltan campos obligatorios:\n\n• ' + errores.join('\n• '));
+        return;
+      }
+      
+      const btn = document.getElementById('btn-enviar');
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+      
+      // Construir lead con códigos CFD
+      const comentario = document.getElementById('f-comentarios')?.value.trim() || '';
+      
+      const lead = {
+        nombres: document.getElementById('f-nombres').value.trim(),                    // CFD-001
+        apellidoPaterno: document.getElementById('f-ap-paterno').value.trim(),         // CFD-002
+        apellidoMaterno: document.getElementById('f-ap-materno').value.trim(),         // CFD-003
+        rut: document.getElementById('f-rut').value.trim(),                            // CFD-004
+        email: document.getElementById('f-email').value.trim(),                        // CFD-005
+        telefono: document.getElementById('f-telefono').value.trim(),                  // CFD-006
+        fechaNacimiento: document.getElementById('f-fecha-nac').value,                 // CFD-012
+        carrerasInteres: carrerasSeleccionadas,                                        // CFD-016
+        carreraPrincipal: carrerasSeleccionadas[0]?.nombre || '',                      // CFD-059
+        nivelEstudio: document.getElementById('f-nivel-estudio').value,                // CFD-018
+        rbdColegio: document.getElementById('f-rbd')?.value || '',                     // CFD-020
+        colegio: document.getElementById('f-colegio')?.value || '',                    // CFD-021
+        comentario: comentario,                                                        // Comentarios/preguntas del lead
+        actividadId: actividadActual.id || '',                                         // ID técnico interno
+        actividadPromoId: actividadActual.promoId || '',                               // CFD-031 (ID legible: ACT-XXXX)
+        actividadNombre: actividadActual.nombre || actividadActual.nombreInst || '',   // CFD-066
+        fechaRegistro: firebase.firestore.FieldValue.serverTimestamp(),
+        fechaRegistroIso: new Date().toISOString(),
+        origen: 'Formulario Actividad',
+        procesado: false
+      };
+      
+      console.log('[Form] Enviando lead:', lead);
+      
+      try {
+        // Guardar en colección pending_leads (el CRM la sincroniza)
+        await db.collection('pending_leads').add(lead);
+        
+        console.log('[Form] ✓ Lead guardado en Firebase');
+        mostrarEstado('success');
+      } catch (error) {
+        console.error('[Form] Error guardando lead:', error);
+        alert('❌ Hubo un problema al enviar tu información. Por favor, intenta nuevamente.');
+        btn.disabled = false;
+        btn.textContent = '✓ Enviar Formulario';
+      }
+    }
+    
+    // ══════════════════════════════════════════════════════════════════════════
+    // INICIALIZAR
+    // ══════════════════════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+      cargarActividad();
+    });
+  </script>
+
+</body>
+</html>
