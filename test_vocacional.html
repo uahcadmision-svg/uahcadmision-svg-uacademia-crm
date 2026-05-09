@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Vocacional — UAcademia</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--green:#15803D;--green-l:#D1FAE5;--blue:#1D4ED8;--blue-l:#DBEAFE;--purple:#7C3AED;--purple-l:#F3E8FF;--amber:#B45309;--amber-l:#FEF3C7;--red:#DC2626;--teal:#0F766E;--teal-l:#CCFBF1;--bg:#FAFBFC;--card:#fff;--border:#E5E7EB;--text:#0F172A;--text2:#475569;--text3:#94A3B8;--r:12px;--shadow:0 4px 24px rgba(0,0,0,.06)}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    .hero{background:linear-gradient(135deg,#0C4A1F 0%,#15803D 40%,#22C55E 100%);color:#fff;padding:40px 20px 50px;text-align:center;position:relative;overflow:hidden}
+    .hero::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:40px;background:var(--bg);border-radius:50% 50% 0 0}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(28px,5vw,42px);font-weight:800;margin-bottom:8px;letter-spacing:-.5px}
+    .hero p{font-size:14px;opacity:.85;max-width:520px;margin:0 auto;line-height:1.6}
+    .hero .badge{display:inline-block;background:rgba(255,255,255,.15);backdrop-filter:blur(4px);padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;margin-bottom:14px;letter-spacing:.5px}
+    .container{max-width:680px;margin:-30px auto 40px;padding:0 16px;position:relative;z-index:2}
+    .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
+    .card-body{padding:24px}
+    /* Progress */
+    .progress-wrap{padding:16px 24px;background:#F8FAFC;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+    .progress-bar{flex:1;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden}
+    .progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s ease}
+    .progress-text{font-size:11px;font-weight:700;color:var(--green);min-width:44px;text-align:right}
+    /* Steps */
+    .step{display:none;animation:fadeIn .3s ease}
+    .step.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    /* Form fields */
+    .field-group{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    .field-group.full{grid-template-columns:1fr}
+    .field label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px;display:block}
+    .field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;transition:border .2s}
+    .field input:focus,.field select:focus{border-color:var(--green)}
+    .field .req{color:var(--red);font-size:9px}
+    /* Question */
+    .q-header{font-size:13px;font-weight:700;color:var(--text);margin-bottom:16px;line-height:1.5;padding:12px 16px;background:#F0FDF4;border-radius:8px;border-left:4px solid var(--green)}
+    .q-header .q-num{color:var(--green);font-size:11px;font-weight:700;display:block;margin-bottom:2px}
+    .likert{display:flex;justify-content:space-between;gap:4px;margin-bottom:10px}
+    .likert label{flex:1;text-align:center;cursor:pointer;transition:all .15s}
+    .likert input{display:none}
+    .likert .lk-box{display:flex;flex-direction:column;align-items:center;padding:10px 4px;border:1.5px solid var(--border);border-radius:8px;transition:all .15s;min-height:68px;justify-content:center}
+    .likert .lk-box:hover{border-color:var(--green);background:#F0FDF4}
+    .likert input:checked+.lk-box{border-color:var(--green);background:var(--green);color:#fff}
+    .likert .lk-num{font-size:18px;font-weight:700;line-height:1}
+    .likert .lk-txt{font-size:8px;font-weight:500;margin-top:3px;line-height:1.2;color:var(--text3)}
+    .likert input:checked+.lk-box .lk-txt{color:rgba(255,255,255,.8)}
+    /* Navigation */
+    .nav-btns{display:flex;justify-content:space-between;margin-top:20px;gap:10px}
+    .btn{padding:10px 20px;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s}
+    .btn-back{background:#F1F5F9;color:var(--text2)}.btn-back:hover{background:#E2E8F0}
+    .btn-next{background:var(--green);color:#fff}.btn-next:hover{background:#166534}
+    .btn-next:disabled{opacity:.5;cursor:not-allowed}
+    /* Results */
+    .result-area{text-align:center;padding:10px 0}
+    .result-area h2{font-family:'Playfair Display',serif;font-size:26px;color:var(--green);margin-bottom:6px}
+    .result-area p{font-size:13px;color:var(--text2);margin-bottom:20px}
+    .area-card{border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;text-align:left;transition:all .2s}
+    .area-card.top{border-color:var(--green);background:#F0FDF4}
+    .area-card .area-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .area-card .area-name{font-size:14px;font-weight:700}
+    .area-card .area-score{font-size:13px;font-weight:700;color:var(--green);background:var(--green-l);padding:2px 10px;border-radius:12px}
+    .area-card .area-bar{height:8px;background:#E5E7EB;border-radius:4px;margin-bottom:8px;overflow:hidden}
+    .area-card .area-bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+    .area-card .area-desc{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:8px}
+    .area-card .careers{display:flex;flex-wrap:wrap;gap:4px}
+    .area-card .careers span{font-size:10px;padding:3px 8px;border-radius:5px;font-weight:600}
+    .next-steps{background:#F8FAFC;border-radius:10px;padding:16px;margin-top:16px;text-align:left}
+    .next-steps h3{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text)}
+    .next-steps li{font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5;list-style:none;padding-left:20px;position:relative}
+    .next-steps li::before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:700}
+    /* Privacy */
+    .privacy{background:#F0F7FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:12px 14px;margin:16px 0}
+    .privacy label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:11px;line-height:1.6;color:#1E3A5F}
+    .privacy input{margin-top:3px;width:16px;height:16px;accent-color:var(--green);flex-shrink:0}
+    .privacy a{color:var(--blue);font-weight:600}
+    /* Error */
+    .error-msg{color:var(--red);font-size:11px;font-weight:600;margin-top:8px;display:none}
+    /* Success */
+    .success-view{display:none;text-align:center;padding:40px 20px}
+    .success-view .check{width:64px;height:64px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px}
+    /* Responsive */
+    @media(max-width:480px){.field-group{grid-template-columns:1fr}.likert{flex-wrap:wrap}.likert label{flex:0 0 calc(20% - 4px)}.container{padding:0 10px}}
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="badge">CENTRO DE APRENDIZAJES · UACADEMIA</div>
+  <h1>Test Vocacional</h1>
+  <p>Descubre tus áreas de interés y las carreras que mejor se alinean con tu perfil a través de este test diseñado por el Centro de Aprendizajes de UAcademia.</p>
+</div>
+
+<div class="container">
+  <div class="card" id="test-card">
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-text" id="progress-text">0%</div>
+    </div>
+    <div class="card-body">
+
+      <!-- STEP 0: Datos personales -->
+      <div class="step active" id="step-0">
+        <div class="q-header"><span class="q-num">PASO 1 DE 2</span>Completa tus datos personales para recibir tus resultados</div>
+        <div class="field-group">
+          <div class="field"><label>Nombres <span class="req">*</span></label><input id="f-nombre" placeholder="Tu nombre"></div>
+          <div class="field"><label>Apellidos <span class="req">*</span></label><input id="f-apellido" placeholder="Tu apellido"></div>
+        </div>
+        <div class="field-group">
+          <div class="field"><label>RUT <span class="req">*</span></label><input id="f-rut" placeholder="12.345.678-9"></div>
+          <div class="field"><label>Email <span class="req">*</span></label><input id="f-email" type="email" placeholder="tu@correo.com"></div>
+        </div>
+        <div class="field-group">
+          <div class="field"><label>Teléfono <span class="req">*</span></label><input id="f-tel" placeholder="+56 9 1234 5678"></div>
+          <div class="field">
+            <label>Nivel de Estudio <span class="req">*</span></label>
+            <select id="f-nivel">
+              <option value="">Selecciona...</option>
+              <option>1° Medio</option><option>2° Medio</option><option>3° Medio</option><option>4° Medio</option><option>Egresado</option><option>Profesional</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field"><label>Colegio / Institución</label><input id="f-colegio" placeholder="Nombre del colegio"></div>
+          <div class="field"><label>Comuna</label><input id="f-comuna" placeholder="Tu comuna"></div>
+        </div>
+
+        <div class="privacy">
+          <label>
+            <input type="checkbox" id="f-privacidad">
+            <span>Al completar y enviar este formulario, usted acepta recibir información relacionada con carreras y/o programas de interés que imparte la Universidad Academia de Humanismo Cristiano. Además, declara haber tomado conocimiento de nuestra política de protección de datos, disponible en el siguiente enlace: <a href="https://www.academia.cl/privacidad/" target="_blank">Política de Protección de Datos</a>.</span>
+          </label>
+        </div>
+
+        <div class="error-msg" id="err-datos"></div>
+        <div class="nav-btns"><div></div><button class="btn btn-next" onclick="iniciarTest()">Comenzar Test →</button></div>
+      </div>
+
+      <!-- STEPS 1-35: Preguntas (generadas por JS) -->
+      <div id="questions-container"></div>
+
+      <!-- STEP FINAL: Resultados -->
+      <div class="step" id="step-results">
+        <div class="result-area">
+          <h2>Tus Resultados</h2>
+          <p>Análisis de tus intereses, habilidades y estilo de pensamiento</p>
+          <div id="results-body"></div>
+          <div class="next-steps">
+            <h3>📌 Próximos Pasos</h3>
+            <ul>
+              <li>Investiga las mallas curriculares de las carreras sugeridas en <a href="https://admision.uacademia.cl" target="_blank" style="color:var(--green)">admision.uacademia.cl</a></li>
+              <li>Habla con profesionales que trabajen en las áreas que más te interesan</li>
+              <li>Evalúa si el campo laboral coincide con tu estilo de pensamiento</li>
+              <li>Visita UAcademia y conoce nuestras facultades y laboratorios</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success after submit -->
+  <div class="card success-view" id="success-view">
+    <div class="card-body" style="padding:40px 20px">
+      <div class="check">✅</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:24px;color:var(--green);margin-bottom:8px">¡Resultados Enviados!</h2>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Tus resultados han sido registrados. Pronto un asesor de admisión se pondrá en contacto contigo para orientarte en tu proceso.</p>
+      <p style="font-size:12px;color:var(--text3)">Universidad Academia de Humanismo Cristiano<br>admision.uacademia.cl · centrodeaprendizajes@uacademia.cl</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// FIREBASE
+// ══════════════════════════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyAvZVIYttbF3v1raqOEoHwd4t0Liu8oNKE",
+  authDomain: "uacademia-crm.firebaseapp.com",
+  projectId: "uacademia-crm",
+  storageBucket: "uacademia-crm.firebasestorage.app",
+  messagingSenderId: "788472738103",
+  appId: "1:788472738103:web:996ebcc18e08040c386ab2"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PREGUNTAS Y ÁREAS
+// ══════════════════════════════════════════════════════════════════════════════
+const PREGUNTAS = [
+  { n:1,  t:"Frente a un problema complejo, priorizo construir una explicación antes que intervenir." },
+  { n:2,  t:"En contextos exigentes, mantengo el foco en la precisión más que en la rapidez." },
+  { n:3,  t:"Me resulta natural interpretar el comportamiento de otros en función de su contexto." },
+  { n:4,  t:"Prefiero situaciones donde deba tomar decisiones con impacto en otras personas." },
+  { n:5,  t:"Cuando una tarea no tiene estructura, tiendo a crear una propia." },
+  { n:6,  t:"Disfruto trabajar con sistemas donde pequeños cambios generan grandes efectos." },
+  { n:7,  t:"Me involucro en procesos donde el resultado depende de múltiples variables." },
+  { n:8,  t:"Prefiero contextos donde se valore la evidencia por sobre la opinión." },
+  { n:9,  t:"Me interesa comprender fenómenos más allá de su utilidad inmediata." },
+  { n:10, t:"Disfruto participar en discusiones donde se analizan problemáticas sociales." },
+  { n:11, t:"Me resulta estimulante transformar ideas abstractas en productos concretos." },
+  { n:12, t:"Prefiero contextos donde se valore la evidencia por sobre la opinión." },
+  { n:13, t:"Me interesa comprender fenómenos más allá de su utilidad inmediata." },
+  { n:14, t:"Disfruto participar en discusiones donde se analizan problemáticas sociales." },
+  { n:15, t:"Me resulta estimulante transformar ideas abstractas en productos concretos." },
+  { n:16, t:"Me siento cómodo enfrentando situaciones emocionalmente demandantes." },
+  { n:17, t:"Prefiero resolver problemas mediante modelos o esquemas estructurados." },
+  { n:18, t:"Me interesa influir en decisiones que afectan a grupos o instituciones." },
+  { n:19, t:"Disfruto explorar distintas formas de expresar una misma idea." },
+  { n:20, t:"Me atraen los entornos donde la tecnología cumple un rol central." },
+  { n:21, t:"Prefiero analizar datos antes de emitir conclusiones." },
+  { n:22, t:"Me involucro activamente cuando una situación requiere apoyo humano directo." },
+  { n:23, t:"Valoro la innovación incluso cuando implica asumir riesgos." },
+  { n:24, t:"Prefiero ambientes donde existan normas claras de funcionamiento." },
+  { n:25, t:"Me interesa comprender procesos biológicos o químicos complejos." },
+  { n:26, t:"Disfruto intervenir en problemáticas humanas concretas." },
+  { n:27, t:"Me resulta natural generar propuestas creativas ante desafíos." },
+  { n:28, t:"Me interesa optimizar procesos o sistemas existentes." },
+  { n:29, t:"Prefiero roles donde exista responsabilidad directa sobre resultados." },
+  { n:30, t:"Me motiva comprender el comportamiento humano en profundidad." },
+  { n:31, t:"Disfruto trabajar en proyectos con componente artístico o expresivo." },
+  { n:32, t:"Me interesa el desarrollo de soluciones tecnológicas." },
+  { n:33, t:"Prefiero analizar situaciones desde múltiples perspectivas." },
+  { n:34, t:"Me siento cómodo tomando decisiones bajo presión." },
+  { n:35, t:"Me interesa el trabajo clínico o de salud." }
+];
+
+const AREAS = [
+  {
+    id: 'salud', nombre: 'Salud y Ciencias', emoji: '🔬', color: '#0F766E', bgColor: '#CCFBF1',
+    preguntas: [1,2,8,9,17,21,25,35],
+    perfil: 'Perfil de Investigación y Rigor: Priorizas la evidencia, mantienes foco en la precisión e interés por procesos biológicos y químicos complejos.',
+    carreras: ['Medicina','Enfermería','Kinesiología','Terapia Ocupacional','Tecnología Médica','Obstetricia','Química y Farmacia','Medicina Veterinaria']
+  },
+  {
+    id: 'social', nombre: 'Social y Humanista', emoji: '🤝', color: '#1D4ED8', bgColor: '#DBEAFE',
+    preguntas: [3,4,10,14,18,22,26,30],
+    perfil: 'Perfil de Análisis Humano: Interpretas el comportamiento en contexto, disfrutas discusiones sociales y valoras múltiples perspectivas.',
+    carreras: ['Psicología','Trabajo Social','Derecho','Ciencias Políticas y Relaciones Internacionales','Antropología']
+  },
+  {
+    id: 'artes', nombre: 'Artes y Creatividad', emoji: '🎨', color: '#7C3AED', bgColor: '#F3E8FF',
+    preguntas: [11,15,19,23,27,31,33],
+    perfil: 'Perfil Expresivo y Transformador: Transformas ideas abstractas en productos concretos con enfoque artístico y propuestas creativas.',
+    carreras: ['Arquitectura','Cine y Artes Audiovisuales','Teatro','Danza','Composición Musical','Interpretación Musical','Diseño en Artes Escénicas','Artes y Oficios']
+  },
+  {
+    id: 'tech', nombre: 'Tecnología y Datos', emoji: '💻', color: '#B45309', bgColor: '#FEF3C7',
+    preguntas: [6,13,16,20,24,28,32,34],
+    perfil: 'Perfil Sistémico y Analítico: Te interesan sistemas complejos, soluciones tecnológicas y el análisis de datos con modelos estructurados.',
+    carreras: ['Ingeniería Civil Industrial','Ingeniería en Informática y Ciencia de Datos','Animación Digital']
+  },
+  {
+    id: 'liderazgo', nombre: 'Liderazgo y Decisión', emoji: '🎯', color: '#DC2626', bgColor: '#FEE2E2',
+    preguntas: [7,12,29],
+    perfil: 'Perfil de Liderazgo: Prefieres roles con responsabilidad directa, toma de decisiones e involucramiento en procesos multivariables.',
+    carreras: ['Administración','Ciencias Políticas','Ingeniería Civil Industrial']
+  },
+  {
+    id: 'organizacion', nombre: 'Organización y Estructura', emoji: '📋', color: '#15803D', bgColor: '#D1FAE5',
+    preguntas: [5,33],
+    perfil: 'Perfil Organizador: Creas estructura donde no la hay y prefieres ambientes con normas claras y análisis multidimensional.',
+    carreras: ['Derecho','Ingeniería Civil Industrial','Trabajo Social']
+  }
+];
+
+const LIKERT_LABELS = ['Totalmente\nen desacuerdo','En\ndesacuerdo','Ni de acuerdo\nni en desacuerdo','De\nacuerdo','Totalmente\nde acuerdo'];
+
+// ══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════════════
+let currentStep = 0; // 0=datos, 1-35=preguntas, 36=results
+const respuestas = {};
+const TOTAL_STEPS = PREGUNTAS.length + 2; // datos + 35 preguntas + results
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RENDER QUESTIONS
+// ══════════════════════════════════════════════════════════════════════════════
+function renderQuestions() {
+  const container = document.getElementById('questions-container');
+  let html = '';
+  PREGUNTAS.forEach((p, i) => {
+    const stepNum = i + 1;
+    html += `<div class="step" id="step-${stepNum}">
+      <div class="q-header">
+        <span class="q-num">PREGUNTA ${p.n} DE ${PREGUNTAS.length}</span>
+        ${p.t}
+      </div>
+      <div class="likert">
+        ${[1,2,3,4,5].map(v => `
+          <label>
+            <input type="radio" name="q${p.n}" value="${v}" onchange="onAnswer(${p.n},${v})">
+            <div class="lk-box">
+              <div class="lk-num">${v}</div>
+              <div class="lk-txt">${LIKERT_LABELS[v-1]}</div>
+            </div>
+          </label>
+        `).join('')}
+      </div>
+      <div class="nav-btns">
+        <button class="btn btn-back" onclick="goStep(${stepNum - 1})">← Volver</button>
+        <button class="btn btn-next" id="next-${stepNum}" disabled onclick="goStep(${stepNum + 1})">
+          ${stepNum === PREGUNTAS.length ? 'Ver Resultados →' : 'Siguiente →'}
+        </button>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function onAnswer(qNum, value) {
+  respuestas[qNum] = value;
+  const stepIdx = PREGUNTAS.findIndex(p => p.n === qNum);
+  const btn = document.getElementById(`next-${stepIdx + 1}`);
+  if (btn) btn.disabled = false;
+}
+
+function goStep(step) {
+  // Hide all steps
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  
+  if (step > PREGUNTAS.length) {
+    // Show results
+    calcularResultados();
+    document.getElementById('step-results').classList.add('active');
+    currentStep = TOTAL_STEPS - 1;
+  } else {
+    const el = document.getElementById(`step-${step}`);
+    if (el) el.classList.add('active');
+    currentStep = step;
+  }
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  const pct = Math.round((currentStep / (TOTAL_STEPS - 1)) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = pct + '%';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VALIDAR DATOS
+// ══════════════════════════════════════════════════════════════════════════════
+function iniciarTest() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const apellido = document.getElementById('f-apellido').value.trim();
+  const rut = document.getElementById('f-rut').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const tel = document.getElementById('f-tel').value.trim();
+  const nivel = document.getElementById('f-nivel').value;
+  const priv = document.getElementById('f-privacidad').checked;
+
+  const errores = [];
+  if (!nombre) errores.push('Nombre');
+  if (!apellido) errores.push('Apellido');
+  if (!rut) errores.push('RUT');
+  if (!email || !email.includes('@')) errores.push('Email válido');
+  if (!tel) errores.push('Teléfono');
+  if (!nivel) errores.push('Nivel de estudio');
+  if (!priv) errores.push('Aceptar política de privacidad');
+
+  const errEl = document.getElementById('err-datos');
+  if (errores.length) {
+    errEl.textContent = '⚠️ Campos requeridos: ' + errores.join(', ');
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  goStep(1);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CALCULAR RESULTADOS
+// ══════════════════════════════════════════════════════════════════════════════
+function calcularResultados() {
+  const scores = AREAS.map(area => {
+    const total = area.preguntas.reduce((sum, qn) => sum + (respuestas[qn] || 0), 0);
+    const max = area.preguntas.length * 5;
+    const pct = Math.round((total / max) * 100);
+    return { ...area, total, max, pct };
+  });
+  scores.sort((a, b) => b.pct - a.pct);
+
+  let html = '';
+  scores.forEach((s, i) => {
+    html += `<div class="area-card ${i === 0 ? 'top' : ''}">
+      <div class="area-hd">
+        <span class="area-name">${s.emoji} ${s.nombre}${i === 0 ? ' — Tu área principal' : ''}</span>
+        <span class="area-score" style="background:${s.bgColor};color:${s.color}">${s.pct}%</span>
+      </div>
+      <div class="area-bar"><div class="area-bar-fill" style="width:${s.pct}%;background:${s.color}"></div></div>
+      <div class="area-desc">${s.perfil}</div>
+      <div class="careers">
+        ${s.carreras.map(c => `<span style="background:${s.bgColor};color:${s.color}">${c}</span>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  // Add submit button
+  html += `<div style="margin-top:20px">
+    <button class="btn btn-next" style="width:100%;padding:14px;font-size:15px" onclick="enviarResultados()">
+      📤 Enviar Resultados y Registrarme
+    </button>
+    <div class="error-msg" id="err-envio" style="text-align:center"></div>
+  </div>`;
+
+  document.getElementById('results-body').innerHTML = html;
+  
+  // Store scores for submission
+  window._testScores = scores;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ENVIAR A FIREBASE
+// ══════════════════════════════════════════════════════════════════════════════
+async function enviarResultados() {
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+
+  try {
+    const nombre = document.getElementById('f-nombre').value.trim();
+    const apellido = document.getElementById('f-apellido').value.trim();
+    const rut = document.getElementById('f-rut').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    const tel = document.getElementById('f-tel').value.trim();
+    const nivel = document.getElementById('f-nivel').value;
+    const colegio = document.getElementById('f-colegio').value.trim();
+    const comuna = document.getElementById('f-comuna').value.trim();
+
+    const scores = window._testScores || [];
+    const topArea = scores[0] || {};
+    const topCarrera = topArea.carreras?.[0] || '';
+
+    // Build respuestas detail
+    const respDetail = {};
+    PREGUNTAS.forEach(p => { respDetail[`P${p.n}`] = respuestas[p.n] || 0; });
+    
+    const scoresResumen = {};
+    scores.forEach(s => { scoresResumen[s.nombre] = { puntaje: s.total, maximo: s.max, porcentaje: s.pct }; });
+
+    const lead = {
+      nombres: nombre,
+      apPaterno: apellido.split(' ')[0] || '',
+      apMaterno: apellido.split(' ').slice(1).join(' ') || '',
+      rut,
+      email,
+      tel1: tel,
+      nivelEM: nivel,
+      colegio,
+      comuna,
+      carreraPrincipal: topCarrera ? topCarrera + ' (Diurna)' : '',
+      origen: 'Test Vocacional',
+      tipo: 'lead',
+      _processed: false,
+      _submittedAt: new Date().toISOString(),
+      _origen: 'Test Vocacional',
+      // Test data
+      testVocacional: {
+        respuestas: respDetail,
+        resultados: scoresResumen,
+        areaPrincipal: topArea.nombre || '',
+        carrerasSugeridas: topArea.carreras || [],
+        fechaTest: new Date().toISOString()
+      },
+      // Privacy
+      privacidadAutorizada: true,
+      privacidadAceptada: true,
+      privacidadTexto: 'Al completar y enviar este formulario, usted acepta recibir información relacionada con carreras y/o programas de interés que imparte la Universidad Academia de Humanismo Cristiano. Además, declara haber tomado conocimiento de nuestra política de protección de datos. https://www.academia.cl/privacidad/',
+      privacidadFecha: new Date().toISOString()
+    };
+
+    await db.collection('pending_leads').add(lead);
+
+    document.getElementById('test-card').style.display = 'none';
+    document.getElementById('success-view').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch(err) {
+    console.error('Error enviando:', err);
+    const errEl = document.getElementById('err-envio');
+    errEl.textContent = '❌ Error al enviar. Intenta nuevamente.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '📤 Enviar Resultados y Registrarme';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+renderQuestions();
+</script>
+</body>
+</html>
